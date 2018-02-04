@@ -25,7 +25,7 @@ uint8_t startAdress;
 
 uint8_t maximumBrightness;
 uint8_t mode;
-uint8_t effectCounter;
+int effectCounter;
 
 void turnOnAnimation();
 void turnOffAnimation();

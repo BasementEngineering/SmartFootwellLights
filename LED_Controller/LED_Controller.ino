@@ -1,4 +1,4 @@
-//#define DEBUG
+#define DEBUG
 
 /*#define UP 1
 #define DOWN 2
@@ -37,10 +37,10 @@
 #include "BrightnessController.h"
 #include "ColorController.h"
 
-#define LED_PIN 5
-#define TURN_OFF_PIN 4
-#define DATA_PIN 3
-#define REQUEST_PIN 2
+#define LED_PIN 2
+#define TURN_OFF_PIN 3
+#define DATA_PIN 4
+#define REQUEST_PIN 5
 
 #define numberOfSignals 24
 
@@ -77,6 +77,8 @@ void loop() {
   input = jBus.read();
  }
   if (input > 0) {
+    Serial.print("Input: ");
+    Serial.println(input);
     setLights(input);
   }
 

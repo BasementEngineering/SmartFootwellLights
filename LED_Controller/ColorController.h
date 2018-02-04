@@ -36,7 +36,7 @@ class ColorController {
 
     uint8_t mode;
     uint8_t speed;
-    uint8_t effectCounter;
+    int effectCounter;
 
     uint32_t previousColor;
     uint32_t nextColor;

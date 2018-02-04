@@ -1,37 +1,44 @@
+
 //#define DEBUG
-#define RECEIVER_PIN 2
+unsigned long startPoint = 0;
 
-#define REQUEST_PIN 0
-#define DATA_PIN 1
+const int REQUEST_PIN = 0;
+const int DATA_PIN = 1;
+const int RECEIVER_PIN = 2;
 
+#ifdef DEBUG
+#include "DigiKeyboard.h"
+#endif
 #include <JBus.h>
-
 JBus jBus(REQUEST_PIN, DATA_PIN);
 
 //functions
 byte getInput(void);
 void printBinaryValue(byte value);
 
-void sendData(int data);
-
 void setup() {
   pinMode(RECEIVER_PIN, INPUT);
   
-#ifdef DEBUG
-  Serial.begin(9600);
-  Serial.println("ready");
+  #ifdef DEBUG
+  DigiKeyboard.println("Digispark is ready");
 #endif
+  
 }
 
 void loop() {
-  
-  int input = getInput();
 
-  if (input) {
+  byte input = getInput();
+
+    if(millis() - startPoint > 2000){
+      input = 42;
+      startPoint = millis();
+    }
+
+  if(input){
 #ifdef DEBUG
-    Serial.println(input);
+    DigiKeyboard.println(input);
 #endif
-    sendData(input);
+jBus.write(input);
   }
 
 }
@@ -58,6 +65,13 @@ byte decodeNECMessage(){
         }
       }
 }
+
+#ifdef DEBUG
+    DigiKeyboard.println("finished decoding");
+    DigiKeyboard.println(byteValue, BIN);
+    DigiKeyboard.println(inversedByteValue, BIN);
+#endif
+
    //Validating the received Signal by comparing the two Bytes
     if (byteValue == ~inversedByteValue) {
       return byteValue;
@@ -78,13 +92,8 @@ byte getInput(void) {
   return (result + 1);
 }
 
-void sendData(int data){
-  if(data > 0){
-    jBus.write(data);
-  }
-}
 
-/*void printBinaryValue(byte value) {
+void printBinaryValue(byte value) {
   for (int i = 0; i < 8; i++) {
     byte binaryMask = B00000000;
     binaryMask |= ((byte)(1 << i));
@@ -93,4 +102,3 @@ void sendData(int data){
   }
   Serial.println();
 }
-*/
