@@ -9,6 +9,12 @@ ColorController::ColorController(LEDStrip* strip, int EEPromAdress):
   startAdress = EEPromAdress;
   ledStrip = strip;
   loadSettings();
+
+Serial.begin(9600);
+Serial.println(mode);
+Serial.println(nextColor);
+ledStrip->setColor(nextColor);
+//update(true);
 }
 
 void ColorController::update(bool forceUpdate) {
@@ -17,6 +23,8 @@ void ColorController::update(bool forceUpdate) {
     effectCounter++;
     }
     switch (mode) {
+      case NO_EFFECT: ledStrip->setColor(nextColor);
+      break;
       case FADING: fadeColor();
         break;
       case RAINBOW: doTheRainbow();

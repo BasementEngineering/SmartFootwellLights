@@ -1,5 +1,3 @@
-#define DEBUG
-
 /*#define UP 1
 #define DOWN 2
 #define OFF 3
@@ -33,17 +31,19 @@
 
 #include <Wire.h>
 #include <JBus.h>
+#include<Timer.h>
 #include "LEDStrip.h"
 #include "BrightnessController.h"
 #include "ColorController.h"
 
 #define LED_PIN 2
-#define TURN_OFF_PIN 3
+#define TURN_OFF_PIN 3 //lamp Voltage lower than ~ 2/3 off VBatt -> HIGH 
 #define DATA_PIN 4
 #define REQUEST_PIN 5
 
 #define numberOfSignals 24
 
+Timer turnOnTimer(10000, false);
 JBus jBus(REQUEST_PIN,DATA_PIN);
 LEDStrip ledStrip(LED_PIN);
 ColorController colorController(&ledStrip, 2);
@@ -51,6 +51,8 @@ BrightnessController brightnessController(&ledStrip, 12);
 
 //Function Prototypes
 int getData();
+
+#define DEBUG
 
 void setup() {
   #ifdef DEBUG
@@ -61,32 +63,39 @@ void setup() {
 ledStrip.begin();
 
 pinMode(TURN_OFF_PIN, INPUT);
+Serial.println("turning on");
+Serial.println(digitalRead(TURN_OFF_PIN));
 if(digitalRead(TURN_OFF_PIN) == LOW){
   brightnessController.turnOn();
 }
 else{
   brightnessController.turnOnRunning();
 }
+turnOnTimer.start();
 
 }
 
 void loop() {
 
   uint8_t input = 0;
- if(jBus.requestAvailable()){
+ /*if(jBus.requestAvailable()){
   input = jBus.read();
  }
   if (input > 0) {
     Serial.print("Input: ");
     Serial.println(input);
     setLights(input);
-  }
+  }*/
 
   colorController.update();
   brightnessController.update();
+
+  if(digitalRead(TURN_OFF_PIN) == LOW && turnOnTimer.isFinished()){
+  brightnessController.turnOff();
+}
 }
 
-void setLights(uint8_t input) {
+/*void setLights(uint8_t input) {
 
   switch (input) {
     case 1: brightnessController.up();
@@ -151,4 +160,4 @@ void setLights(uint8_t input) {
     default: break;
 
   }
-}
+}*/

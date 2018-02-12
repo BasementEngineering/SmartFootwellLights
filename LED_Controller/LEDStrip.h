@@ -31,7 +31,7 @@ uint32_t dimmColor(uint32_t color, uint8_t brightness);
 void pushToStrip(void);
 
 private:
-uint8_t stripLength;
+int stripLength;
 Adafruit_NeoPixel strip;
 uint8_t globalBrightnessBuffer[ELEMENT_LENGTH*4];
 uint32_t globalColorBuffer[ELEMENT_LENGTH*4];

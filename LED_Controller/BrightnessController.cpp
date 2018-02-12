@@ -54,7 +54,7 @@ void BrightnessController::turnOnRunning(){
 
 void BrightnessController::turnOff(){
   mode = TURNING_OFF;
-  effectCounter = (255 + (ELEMENT_LENGTH - 1) * 50);
+  effectCounter = (255 + (ELEMENT_LENGTH - 1) * BRIGHTNESS_DIFFERENCE);
 }
 
 void BrightnessController::turnOn(){
@@ -63,11 +63,12 @@ void BrightnessController::turnOn(){
 }
 
 void BrightnessController::turnOnAnimation(){
-effectCounter++; 
- 
+effectCounter += 5; 
+
 uint8_t brightnessBuffer[8];
+
  for(int i = 0; i < ELEMENT_LENGTH; i++){
-  int brightness = effectCounter - i*50; 
+  int brightness = effectCounter - i*BRIGHTNESS_DIFFERENCE; 
   if(brightness < 0){
     brightnessBuffer[i] = 0;
   }
@@ -80,16 +81,16 @@ uint8_t brightnessBuffer[8];
   
   ledStrip->setEveryElementsBrightnessBuffer(brightnessBuffer);
  }
- if(effectCounter == (255 + (ELEMENT_LENGTH - 1) * 50)){
+ if(effectCounter >= (255 + (ELEMENT_LENGTH - 1) * BRIGHTNESS_DIFFERENCE)){
   mode = NO_EFFECT;
  }
 }
 
 void BrightnessController::turnOffAnimation(){
-effectCounter--;  
+effectCounter -= 5;  
 uint8_t brightnessBuffer[8];
  for(int i = 0; i < ELEMENT_LENGTH; i++){
-  int brightness = effectCounter - i*50; 
+  int brightness = effectCounter - i*BRIGHTNESS_DIFFERENCE; 
   if(brightness < 0){
     brightnessBuffer[i] = 0;
   }
@@ -101,6 +102,10 @@ uint8_t brightnessBuffer[8];
   }
   
   ledStrip->setEveryElementsBrightnessBuffer(brightnessBuffer);
+ }
+
+ if(effectCounter <= 0){
+  mode = NO_EFFECT;
  }
 }
 

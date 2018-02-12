@@ -19,6 +19,8 @@ void turnOff();
 void turnOn();
 
 private:
+const uint8_t BRIGHTNESS_DIFFERENCE = 20;
+
 Timer updateTimer;
 LEDStrip* ledStrip;
 uint8_t startAdress;
