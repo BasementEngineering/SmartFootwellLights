@@ -1,101 +1,158 @@
-/*#define UP 1
-#define DOWN 2
-#define OFF 3
-#define ON 4
+/** \brief This sketch is part of the Smart Footwell Light Project.
+ *  It is supposed to run on an ATMega type Arduino that acts as an LED controller for a strip of WS2812B RGB LED's.
+ *  
+ *  Two pins of the Arduino are attached to a Digispark that is equipped with an IR Receiver and handles IR input.
+ *  It translates the received Signals into the according button numbers and sends them over to this board using the two wire JBus interface.
+ *  This two-MCU-solution enables me to work around the issue of not being able to receive IR signals and update RGB LED's using the NeoPixel library.
+ *  
+ *  The Arduino is also attached to an I2C acceleration sensor that might be used for Light effects in the future. 
+ *  
+ *  To see the whole project head over to \link Instructables http://www.instructables.com/member/Basement+Engineering/ \endlink
+ *  or \link Youtube https://www.youtube.com/channel/UCOITWYehgOXzxSZx-iEaULQ \endlink
+ *  
+ * \version 1.0 \date 10.04.2018
+ * \author J. Kettler aka. Basement Engineering
+ */
 
-#define R 5
-#define G 6
-#define B 7
-#define W 8
+/** IR Remote Signals and coresponding Buttons
+  //first row
+  0xF700FF, // -> 1. UP 
+  0xF7807F, // -> 2. DOWN
+  0xF740BF, // -> 3. OFF
+  0xF7C03F, // -> 4. ON
+  //second row
+  0xF720DF, // -> 5. Red
+  0xF7A05F, // -> 6. Green
+  0xF7609F, // -> 7. Blue
+  0xF7E01F, // -> 8. White
+  //third row
+  0xF710EF, // -> 9. Red1
+  0xF7906F, // -> 10. Green1
+  0xF750AF, // -> 11. Blue1
+  0xF7D02F, // -> 12. Flash
+  //fifth row
+  0xF730CF, // -> 13. Red2
+  0xF7B04F, // -> 14. Green2
+  0xF7708F, // -> 15. Blue2
+  0xF7F00F, // -> 16. Strobe
+  //sixth row
+  0xF708F7, // -> 17. Red3
+  0xF78877, // -> 18. Green3
+  0xF748B7, // -> 19. Blue3
+  0xF7C837, // -> 20. Fade
+  //seventh row
+  0xF728D7, // -> 21. Red4
+  0xF7A857, // -> 22. Green4
+  0xF76897, // -> 23. Blue4
+  0xF7E817, // -> 24. Smooth
 
-#define R1 9
-#define G1 10
-#define B1 11
-#define FLASH 12
+  0xFFFFFFFF, // -> 25. Repeat Message
+*/
+const int numberOfSignals = 24;
 
-#define R2 13
-#define G2 14
-#define B2 15
-#define STROBE 16
-
-#define R3 17
-#define G3 18
-#define B3 19
-#define FADE 20
-
-#define R4 21
-#define G4 22
-#define B4 23
-#define SMOOTH 24*/
-
-
-#include <Wire.h>
+//Classes
 #include <JBus.h>
-#include<Timer.h>
-#include "LEDStrip.h"
+#include <Timer.h>
+
 #include "BrightnessController.h"
 #include "ColorController.h"
+#include "LEDStrip.h"
 
-#define LED_PIN 2
-#define TURN_OFF_PIN 3 //lamp Voltage lower than ~ 2/3 off VBatt -> HIGH 
-#define DATA_PIN 4
-#define REQUEST_PIN 5
+//Pin Declarations
+const int LED_PIN = 2;
+const int REQUEST_PIN = 3;
+const int DATA_PIN = 4;
+const int TURN_OFF_PIN = 5; //lamp Voltage lower than ~ 2/3 off VBatt -> HIGH 
 
-#define numberOfSignals 24
-
-Timer turnOnTimer(10000, false);
+//Global Objects
 JBus jBus(REQUEST_PIN,DATA_PIN);
+Timer turnOnTimer(10000, false);
 LEDStrip ledStrip(LED_PIN);
 ColorController colorController(&ledStrip, 2);
 BrightnessController brightnessController(&ledStrip, 12);
 
 //Function Prototypes
-int getData();
+void setLights(uint8_t input);
+void startTurnOnAnimation(void);
+void processUserInput();
 
 #define DEBUG
 
 void setup() {
-  #ifdef DEBUG
-  Serial.begin(9600);
-  Serial.println("Debugging Mode active");
-#endif
-
 ledStrip.begin();
 
 pinMode(TURN_OFF_PIN, INPUT);
-Serial.println("turning on");
-Serial.println(digitalRead(TURN_OFF_PIN));
-if(digitalRead(TURN_OFF_PIN) == LOW){
-  brightnessController.turnOn();
-}
-else{
-  brightnessController.turnOnRunning();
-}
+
+startTurnOnAnimation();
 turnOnTimer.start();
 
+#ifdef DEBUG
+Serial.begin(9600);
+Serial.println("Ready");
+#endif
 }
 
 void loop() {
-
-  uint8_t input = 0;
- /*if(jBus.requestAvailable()){
-  input = jBus.read();
- }
-  if (input > 0) {
-    Serial.print("Input: ");
-    Serial.println(input);
-    setLights(input);
-  }*/
+  
+  if(jBus.requestAvailable() && turnOnTimer.isFinished())
+  {
+    processUserInput();
+  }
 
   colorController.update();
   brightnessController.update();
 
-  if(digitalRead(TURN_OFF_PIN) == LOW && turnOnTimer.isFinished()){
+  if(digitalRead(TURN_OFF_PIN) == LOW && turnOnTimer.isFinished())
+  {
   brightnessController.turnOff();
 }
 }
 
-/*void setLights(uint8_t input) {
+void processUserInput()
+{
+Serial.println("Request Available ");  
+  bool success = false;
+  byte input = jBus.read(success);
+  if(success)
+  {
+    #ifdef DEBUG
+    Serial.println("Successfully received a message");
+    #endif
+    if (input > 0) {
+    #ifdef DEBUG
+    Serial.print("Input: ");
+    Serial.println(input);
+    #endif
+    setLights(input);
+  }
+  else
+  {
+    #ifdef DEBUG
+   Serial.print("Unknown Input: ");
+    Serial.println(input); 
+    #endif
+  }
+  
+  }
+  else
+  {
+    Serial.println("Reading was unsuccessfull ");  
+  }
+  }
+  
+void startTurnOnAnimation(void)
+{
+if(digitalRead(TURN_OFF_PIN) == LOW)
+{
+  brightnessController.turnOn();
+}
+else
+{
+  brightnessController.turnOnRunning();
+}
+}
+
+void setLights(uint8_t input) {
 
   switch (input) {
     case 1: brightnessController.up();
@@ -111,7 +168,7 @@ void loop() {
     case 3: brightnessController.turnOff();
       break;
 
-      case 12: 
+      case 12: colorController.saveSettings();
       break;
       case 16: brightnessController.startAcelerationMode();
       break;
@@ -122,42 +179,42 @@ void loop() {
 
     case 5: colorController.changeColorTo(ledStrip.Color(255,0,0));
       break;
-    case 6: colorController.changeColorTo(ledStrip.Color(255,0,0));
+    case 6: colorController.changeColorTo(ledStrip.Color(0,255,0));
       break;
-    case 7: colorController.changeColorTo(ledStrip.Color(255,0,0));
+    case 7: colorController.changeColorTo(ledStrip.Color(0,0,255));
       break;
-    case 8: colorController.changeColorTo(ledStrip.Color(255,255,255));
-      break;
-
-    case 9:                          
-      break;
-    case 10:  
-      break;
-    case 11:   
+    case 8: colorController.changeColorTo(ledStrip.Color(200,200,255));
       break;
 
-    case 13: 
+    case 9: colorController.changeColorTo(ledStrip.Color(255,50,0));                          
       break;
-    case 14: 
+    case 10: colorController.changeColorTo(ledStrip.Color(0,255,50));  
       break;
-    case 15: 
-      break;
-
-    case 17: 
-      break;
-    case 18: 
-      break;
-    case 19:
+    case 11: colorController.changeColorTo(ledStrip.Color(50,0,255));  
       break;
 
-    case 21: 
+    case 13: colorController.changeColorTo(ledStrip.Color(255,100,0));
       break;
-    case 22: 
+    case 14: colorController.changeColorTo(ledStrip.Color(0,255,100));
       break;
-    case 23: 
+    case 15: colorController.changeColorTo(ledStrip.Color(100,0,255));
+      break;
+
+    case 17: colorController.changeColorTo(ledStrip.Color(255,160,0));
+      break;
+    case 18: colorController.changeColorTo(ledStrip.Color(0,255,160));
+      break;
+    case 19: colorController.changeColorTo(ledStrip.Color(160,0,255));
+      break;
+
+    case 21: colorController.changeColorTo(ledStrip.Color(255,200,0));
+      break;
+    case 22: colorController.changeColorTo(ledStrip.Color(0,255,200));
+      break;
+    case 23: colorController.changeColorTo(ledStrip.Color(200,0,255));
       break;
 
     default: break;
 
   }
-}*/
+}

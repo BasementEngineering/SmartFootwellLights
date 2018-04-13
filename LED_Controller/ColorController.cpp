@@ -1,5 +1,5 @@
 #include "ColorController.h"
-
+#define DEBUG
 enum effects{NO_EFFECT, FADING, RAINBOW, CHANGING_COLOR};
 
 ColorController::ColorController(LEDStrip* strip, int EEPromAdress):
@@ -14,12 +14,14 @@ Serial.begin(9600);
 Serial.println(mode);
 Serial.println(nextColor);
 ledStrip->setColor(nextColor);
-//update(true);
 }
 
-void ColorController::update(bool forceUpdate) {
-  if ((updateTimer.isFinished() && mode != NO_EFFECT) || forceUpdate) {
-    if(!forceUpdate){
+void ColorController::update(bool forceUpdate) 
+{
+  if ((updateTimer.isFinished() && mode != NO_EFFECT) || forceUpdate) 
+  {
+    if(!forceUpdate)
+    {
     effectCounter++;
     }
     switch (mode) {
@@ -37,8 +39,10 @@ void ColorController::update(bool forceUpdate) {
   }  
 }
 
-void ColorController::up() {
-  if (mode == RAINBOW || mode == FADING) {
+void ColorController::up() 
+{
+  if (mode == RAINBOW || mode == FADING) 
+  {
     if (speed < 10) {
       speed++;
       updateTimer.setInterval(speed * 20);
@@ -60,6 +64,14 @@ void ColorController::changeColorTo(uint32_t newColor) {
   previousColor = nextColor;
   nextColor = newColor;
   mode = CHANGING_COLOR;
+  effectCounter = 0;
+  
+  #ifdef DEBUG
+  Serial.print("Starting color change from: ");
+   Serial.println(previousColor, HEX);
+  Serial.print(" to ");
+  Serial.println(nextColor, HEX);
+  #endif
 }
 
 void ColorController::startColorFading() {
@@ -140,7 +152,7 @@ void ColorController::loadSettings() {
   else {
     mode = 0;
     speed = 5;
-    nextColor = ledStrip->Color(255, 255, 255);
+    nextColor = ledStrip->Color(200, 200, 255);
   }
 }
 

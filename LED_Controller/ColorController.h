@@ -9,10 +9,12 @@ class ColorController {
   public:
     ColorController(LEDStrip* strip, int EEPromAdress);
     void update(bool forceUpdate = false);
-
+    void saveSettings();
+        
     void up();
     void down();
 
+    uint32_t getWheelColor(uint8_t wheelPosition);
     void changeColorTo(uint32_t newColor);
     void startColorFading();
     void startRainbow();
@@ -22,9 +24,6 @@ class ColorController {
     void changeColor();
     void doTheRainbow();
 
-    uint32_t getWheelColor(uint8_t wheelPosition);
-
-    void saveSettings();
     void loadSettings();
     void EEPROMWritelong(uint8_t address, long value);
     long EEPROMReadlong(uint8_t address);

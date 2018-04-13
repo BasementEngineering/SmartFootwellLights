@@ -32,8 +32,8 @@ int effectCounter;
 void turnOnAnimation();
 void turnOffAnimation();
 
-void loadSettings();
 void saveSettings();
+void loadSettings();
 };
 
 #endif
