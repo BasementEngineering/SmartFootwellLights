@@ -10,7 +10,7 @@ updateTimer(20, true)
  ledStrip = strip;
   loadSettings();
 ledStrip->setMaximumBrightness(maximumBrightness);
-  
+  mode = NO_EFFECT;
 }
 
 void BrightnessController::update(){

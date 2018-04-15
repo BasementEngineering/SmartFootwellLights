@@ -2,10 +2,11 @@
 #define LEDStrip_h
 
 #include <Adafruit_NeoPixel.h>
+
 const int ELEMENT_LENGTH = 18;
 
-class LEDStrip{
-
+class LEDStrip
+{
 public:
 LEDStrip(int pin);
 
@@ -20,6 +21,7 @@ void setColor(uint32_t color);
 void setElementColor(uint8_t element, uint32_t color);
 void setElementColorBuffer(uint8_t element, uint32_t colorBuffer[ELEMENT_LENGTH], bool outward = true);
 void setEveryElementsColorBuffer(uint32_t colorBuffer[ELEMENT_LENGTH]);
+void setStripsColorBuffer(uint32_t colorBuffer[ELEMENT_LENGTH*4]);
 
 void setBrightness(uint8_t brightness);
 void setElementBrightness(uint8_t element, uint8_t brightness);
@@ -35,7 +37,6 @@ int stripLength;
 Adafruit_NeoPixel strip;
 uint8_t globalBrightnessBuffer[ELEMENT_LENGTH*4];
 uint32_t globalColorBuffer[ELEMENT_LENGTH*4];
-
 };
 #endif
 

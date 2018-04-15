@@ -102,6 +102,13 @@ void LEDStrip::setEveryElementsColorBuffer(uint32_t colorBuffer[ELEMENT_LENGTH])
   }
 }
 
+void LEDStrip::setStripsColorBuffer(uint32_t colorBuffer[ELEMENT_LENGTH*4])
+{
+  for(int i = 0; i < ELEMENT_LENGTH*4; i++){
+  globalColorBuffer[i] = colorBuffer[i];
+  }
+}
+
 uint32_t LEDStrip::dimmColor(uint32_t color, uint8_t brightness) {
 
   if (brightness == 0)

@@ -60,9 +60,9 @@ const int numberOfSignals = 24;
 
 //Pin Declarations
 const int LED_PIN = 2;
+const int TURN_OFF_PIN = 6; //lamp Voltage lower than ~ 2/3 off VBatt -> HIGH
 const int REQUEST_PIN = 3;
 const int DATA_PIN = 4;
-const int TURN_OFF_PIN = 5; //lamp Voltage lower than ~ 2/3 off VBatt -> HIGH 
 
 //Global Objects
 JBus jBus(REQUEST_PIN,DATA_PIN);
@@ -76,18 +76,20 @@ void setLights(uint8_t input);
 void startTurnOnAnimation(void);
 void processUserInput();
 
-#define DEBUG
+//#define DEBUG
 
 void setup() {
-ledStrip.begin();
+#ifdef DEBUG
+Serial.begin(9600);
+#endif
 
 pinMode(TURN_OFF_PIN, INPUT);
+ledStrip.begin();
 
 startTurnOnAnimation();
 turnOnTimer.start();
 
 #ifdef DEBUG
-Serial.begin(9600);
 Serial.println("Ready");
 #endif
 }
@@ -102,25 +104,32 @@ void loop() {
   colorController.update();
   brightnessController.update();
 
-  if(digitalRead(TURN_OFF_PIN) == LOW && turnOnTimer.isFinished())
+  static bool turnOffTriggered = false;
+  if(digitalRead(TURN_OFF_PIN) == HIGH && turnOnTimer.isFinished() && !turnOffTriggered)
   {
+    #ifdef DEBUG
+  Serial.println("Turning Off");
+  #endif
+  turnOffTriggered = true;
   brightnessController.turnOff();
 }
 }
 
 void processUserInput()
 {
-Serial.println("Request Available ");  
+  #ifdef DEBUG
+  Serial.println("Request Available ");
+  #endif  
   bool success = false;
   byte input = jBus.read(success);
   if(success)
-  {
+  {  
     #ifdef DEBUG
     Serial.println("Successfully received a message");
     #endif
     if (input > 0) {
     #ifdef DEBUG
-    Serial.print("Input: ");
+    Serial.print("Input: "); 
     Serial.println(input);
     #endif
     setLights(input);
@@ -136,19 +145,30 @@ Serial.println("Request Available ");
   }
   else
   {
+    #ifdef DEBUG
     Serial.println("Reading was unsuccessfull ");  
+    #endif
   }
   }
   
 void startTurnOnAnimation(void)
 {
-if(digitalRead(TURN_OFF_PIN) == LOW)
+  #ifdef DEBUG
+  Serial.println("Turning On");  
+  #endif
+if(digitalRead(TURN_OFF_PIN) == HIGH)
 {
-  brightnessController.turnOn();
+  #ifdef DEBUG
+  Serial.println("Door triggered");  
+  #endif
+  brightnessController.turnOnRunning();
 }
 else
 {
-  brightnessController.turnOnRunning();
+  #ifdef DEBUG
+    Serial.println("Switch triggered");  
+    #endif
+  brightnessController.turnOn();
 }
 }
 
@@ -170,7 +190,7 @@ void setLights(uint8_t input) {
 
       case 12: colorController.saveSettings();
       break;
-      case 16: brightnessController.startAcelerationMode();
+      case 16: //brightnessController.startAcelerationMode();
       break;
        case 20: colorController.startColorFading();
       break;

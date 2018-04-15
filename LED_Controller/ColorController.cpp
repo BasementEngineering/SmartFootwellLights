@@ -1,5 +1,5 @@
 #include "ColorController.h"
-#define DEBUG
+//#define DEBUG
 enum effects{NO_EFFECT, FADING, RAINBOW, CHANGING_COLOR};
 
 ColorController::ColorController(LEDStrip* strip, int EEPromAdress):
@@ -10,9 +10,12 @@ ColorController::ColorController(LEDStrip* strip, int EEPromAdress):
   ledStrip = strip;
   loadSettings();
 
-Serial.begin(9600);
+#ifdef DEBUG
+Serial.println("Starting Variables are");
 Serial.println(mode);
 Serial.println(nextColor);
+Serial.println(speed);
+#endif
 ledStrip->setColor(nextColor);
 }
 
@@ -81,6 +84,9 @@ void ColorController::startColorFading() {
 }
 
 void ColorController::startRainbow() {
+  #ifdef DEBUG
+  Serial.println("Starting the Rainbow");
+  #endif
   updateTimer.setInterval(speed * 20);
   mode = RAINBOW;
   effectCounter = 0;
@@ -94,19 +100,25 @@ void ColorController::fadeColor() {
 }
 
 void ColorController::changeColor() {
-  if (effectCounter == ELEMENT_LENGTH) {
+  if (effectCounter == ELEMENT_LENGTH) 
+  {
     mode = NO_EFFECT;
   }
-  else {
+  else 
+  {
     uint32_t colorBuffer[ELEMENT_LENGTH];
-    for (int i = 0; i < ELEMENT_LENGTH; i++) {
-      if (i < ELEMENT_LENGTH) {
-        colorBuffer[effectCounter] = nextColor;
+    for (int i = 0; i < ELEMENT_LENGTH; i++) 
+    {
+      if (i <= effectCounter) 
+      {
+        colorBuffer[i] = nextColor;
       }
-      else {
-        colorBuffer[effectCounter] = previousColor;
+      else 
+      {
+        colorBuffer[i] = previousColor;
       }
     }
+    
     ledStrip->setEveryElementsColorBuffer(colorBuffer);
   }
 }
@@ -116,10 +128,11 @@ void ColorController::doTheRainbow() {
 
   uint32_t colorBuffer[ELEMENT_LENGTH * 4];
 
-  for (int i = 0; i < ELEMENT_LENGTH * 4; i++) {
-    uint8_t wheelPosition = i + effectCounter;
+  for (int i = 0; i < (ELEMENT_LENGTH * 4) ; i++) {
+    uint8_t wheelPosition = i * 10 + effectCounter;
     colorBuffer[i] = getWheelColor(wheelPosition);
   }
+  ledStrip->setStripsColorBuffer(colorBuffer);
 
 }
 
@@ -138,7 +151,14 @@ uint32_t ColorController::getWheelColor(byte WheelPos) {
 
 void ColorController::saveSettings() {
   EEPROM.update(startAdress, 42);
-  EEPROM.update(startAdress + 1, mode);
+  if(mode == CHANGING_COLOR)
+  {
+  EEPROM.update(startAdress + 1, NO_EFFECT);
+  }
+  else
+  {
+    EEPROM.update(startAdress + 1, mode);
+  }
   EEPROM.update(startAdress + 2, speed);
   EEPROMWritelong(startAdress + 3, nextColor);
 }
